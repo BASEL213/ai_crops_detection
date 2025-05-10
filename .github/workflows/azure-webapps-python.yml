@@ -37,5 +37,5 @@ jobs:
         uses: azure/webapps-deploy@v3
         with:
           app-name: 'CROPS'
-          publish-profile: ${{ secrets.my_secret_2 }}
+          publish-profile: ${{ secrets.MY_SECRECT_3 }}
           package: release.zip
