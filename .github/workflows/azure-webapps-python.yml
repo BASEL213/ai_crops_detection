@@ -1,4 +1,4 @@
-name: Build and deploy Python app to Azure Web App - crops detection 
+name: Build and deploy Python app to Azure Web App - CROPS
 
 on:
   push:
@@ -7,78 +7,35 @@ on:
   workflow_dispatch:
 
 jobs:
-  build:
+  build-and-deploy:
     runs-on: windows-latest
 
     steps:
       # Step 1: Checkout the repository
-      - uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
 
       # Step 2: Set up Python version
-      - name: Set up Python version
+      - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
 
-      # Step 3: Create and start virtual environment
-      - name: Create and start virtual environment
-        shell: powershell
-        run: |
-          python -m venv venv
-          .\venv\Scripts\Activate.ps1
-      # Step 4: Install dependencies
+      # Step 3: Install dependencies
       - name: Install dependencies
-        shell: powershell
-        run: pip install -r requirements.txt
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
 
-      # Step 5: Create zip artifact for deployment
-      - name: Create zip artifact for deployment
-        shell: powershell
-        run: Compress-Archive -Path * -DestinationPath release.zip -Force
+      # Step 4: Zip the application
+      - name: Create deployment package
+        run: |
+          powershell Compress-Archive -Path * -DestinationPath release.zip -Force
 
-      # Step 6: Upload artifact for deployment jobs
-      - name: Upload artifact for deployment jobs
-        uses: actions/upload-artifact@v4
-        with:
-          name: python-app
-          path: |
-            release.zip
-            !venv/
-  deploy:
-    runs-on: windows-latest
-    needs: build
-    environment:
-      name: 'Production'
-      url: ${{ steps.deploy-to-webapp.outputs.webapp-url }}
-    permissions:
-      id-token: write # This is required for requesting the JWT
-
-    steps:
-      # Step 1: Download artifact from the build job
-      - name: Download artifact from build job
-        uses: actions/download-artifact@v4
-        with:
-          name: python-app
-
-      # Step 2: Unzip artifact using PowerShell
-      - name: Unzip artifact for deployment
-        shell: powershell
-        run: Expand-Archive -Path release.zip -DestinationPath . -Force
-
-      # Step 3: Login to Azure
-      - name: Login to Azure
-        uses: azure/login@v2
-        with:
-          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_2F82C2924CCF4573A2106614348DA0AA }}
-          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_D43E386752C847888C4BE770DF028379 }}
-          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_40929E32E620442BA48203615F25C430 }}
-
-      # Step 4: Deploy to Azure Web App
+      # Step 5: Deploy to Azure Web App using Publish Profile
       - name: Deploy to Azure Web App
         uses: azure/webapps-deploy@v3
-        id: deploy-to-webapp
         with:
-          app-name: 'DIYoraaa'
-          slot-name: 'Production'
+          app-name: 'CROPS'
           publish-profile: ${{ secrets.my_secret_2 }}
-          package: .
+          package: release.zip
