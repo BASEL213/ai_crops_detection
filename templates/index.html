@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Plant Disease Detector</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', sans-serif;
+        }
+
+        body {
+            background: linear-gradient(145deg, #1b2a1f, #132643);
+            min-height: 100vh;
+            overflow: hidden;
+            position: relative;
+        }
+
+        #particles-js {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            background: transparent;
+        }
+
+        .welcome-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            text-align: center;
+            padding: 2rem;
+            opacity: 1;
+            transition: opacity 0.5s ease, transform 0.5s ease;
+            z-index: 1;
+        }
+
+        .welcome-container.hidden {
+            opacity: 0;
+            transform: scale(0.95);
+            pointer-events: none;
+        }
+
+        .welcome-text {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: #e0f7fa;
+            margin-bottom: 2rem;
+            min-height: 3rem;
+            text-shadow: 0 0 10px rgba(224, 247, 250, 0.5);
+            animation: glowText 2s ease-in-out infinite alternate;
+        }
+
+        .enter-btn {
+            background: #4caf50;
+            color: white;
+            padding: 0.9rem 2rem;
+            border: none;
+            border-radius: 48px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(76, 175, 80, 0.4);
+        }
+
+        .enter-btn::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            transition: width 0.6s ease, height 0.6s ease;
+        }
+
+        .enter-btn:hover::before {
+            width: 300px;
+            height: 300px;
+        }
+
+        .enter-btn:hover {
+            background: #45a049;
+            transform: translateY(-2px) scale(1.05);
+            box-shadow: 0 6px 20px rgba(76, 175, 80, 0.6);
+        }
+
+        .main-container {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 2rem;
+            opacity: 0;
+            transition: opacity 0.5s ease, transform 0.5s ease;
+            z-index: 1;
+        }
+
+        .main-container.visible {
+            display: flex;
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .container {
+            background: #2a3b34;
+            padding: 2.5rem;
+            border-radius: 16px;
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.2);
+            max-width: 600px;
+            width: 100%;
+            text-align: center;
+            animation: fadeIn 0.8s ease-out;
+            position: relative;
+            transition: transform 0.3s ease;
+        }
+
+        .container:hover {
+            transform: scale(1.02);
+        }
+
+        h1 {
+            font-size: 2.25rem;
+            font-weight: 700;
+            color: #e0f7fa;
+            margin-bottom: 1rem;
+            text-shadow: 0 0 8px rgba(224, 247, 250, 0.4);
+        }
+
+        .subtitle {
+            font-size: 1rem;
+            color: #b0c4de;
+            margin-bottom: 2rem;
+            opacity: 0.9;
+        }
+
+        .file-input-wrapper {
+            position: relative;
+            margin: 1.5rem 0;
+        }
+
+        input[type="file"] {
+            opacity: 0;
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            cursor: pointer;
+        }
+
+        .file-label {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1.25rem;
+            border: 2px dashed #546e7a;
+            border-radius: 12px;
+            background: #37474f;
+            color: #eceff1;
+            font-size: 1rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .file-label::after {
+            content: '';
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(76, 175, 80, 0.2), transparent);
+            transform: translateX(-100%);
+            transition: transform 0.5s ease;
+        }
+
+        .file-label:hover::after,
+        input[type="file"]:focus + .file-label::after {
+            transform: translateX(100%);
+        }
+
+        .file-label:hover,
+        input[type="file"]:focus + .file-label {
+            border-color: #4caf50;
+            background: #455a64;
+            box-shadow: 0 0 15px rgba(76, 175, 80, 0.3);
+        }
+
+        button {
+            background: #4caf50;
+            color: white;
+            padding: 0.9rem 2rem;
+            border: none;
+            border-radius: 22px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            width: 36%;
+            margin-top: 1.5rem;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(76, 175, 80, 0.4);
+        }
+
+        button::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            transition: width 0.6s ease, height 0.6s ease;
+        }
+
+        button:hover:not(:disabled)::before {
+            width: 300px;
+            height: 300px;
+        }
+
+        button:hover:not(:disabled) {
+            background: #45a049;
+            transform: translateY(-2px) scale(1.05);
+            box-shadow: 0 6px 20px rgba(76, 175, 80, 0.6);
+        }
+
+        button:disabled {
+            background: #546e7a;
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+
+        .preview {
+            margin: 2rem auto 1rem;
+            max-width: 100%;
+            max-height: 300px;
+            border-radius: 12px;
+            display: none;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            animation: zoomIn 0.5s ease;
+            transition: transform 0.3s ease;
+        }
+
+        .preview:hover {
+            transform: scale(1.05);
+        }
+
+        .result {
+            margin-top: 1.5rem;
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #e0f7fa;
+            min-height: 2rem;
+            text-shadow: 0 0 8px rgba(224, 247, 250, 0.4);
+            padding: 0.5rem;
+            border-radius: 8px;
+            background: rgba(224, 247, 250, 0.1);
+            opacity: 1;
+        }
+
+        .result.show {
+            animation: slideIn 0.5s ease forwards;
+        }
+
+        .loader {
+            display: none;
+            width: 40px;
+            height: 40px;
+            margin: 1rem auto;
+            position: relative;
+        }
+
+        .loader.show {
+            display: block;
+        }
+
+        .loader::before {
+            content: '';
+            position: absolute;
+            width: 40px;
+            height: 40px;
+            border: 4px solid #37474f;
+            border-top: 4px solid #4caf50;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        .loader::after {
+            content: '';
+            position: absolute;
+            width: 30px;
+            height: 30px;
+            border: 4px solid #8aa1ac;
+            border-left: 4px solid #4caf50;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite reverse;
+            top: 5px;
+            left: 5px;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes zoomIn {
+            from { opacity: 0; transform: scale(0.8); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(-20px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @keyframes glowText {
+            from { text-shadow: 0 0 10px rgba(224, 247, 250, 0.5); }
+            to { text-shadow: 0 0 20px rgba(224, 247, 250, 0.8); }
+        }
+
+        @media (max-width: 600px) {
+            .welcome-text { font-size: 1.75rem; }
+            .container { padding: 1.5rem; }
+            h1 { font-size: 1.75rem; }
+            .subtitle { font-size: 0.9rem; }
+            button { padding: 0.8rem; width: 50%; }
+        }
+    </style>
+</head>
+<body>
+    <div id="particles-js"></div>
+    <div class="welcome-container" id="welcomeContainer">
+        <h1 class="welcome-text" id="welcomeText"></h1>
+        <button class="enter-btn" onclick="showMain()">Enter</button>
+    </div>
+    <div class="main-container" id="mainContainer">
+        <div class="container" id="tiltContainer">
+            <h1>Plant Disease Detector</h1>
+            <p class="subtitle">Upload a plant image to diagnose its health</p>
+            <div class="file-input-wrapper">
+                <input type="file" id="imageInput" accept="image/*" aria-label="Upload plant image" />
+                <label for="imageInput" class="file-label">Choose an image</label>
+            </div>
+            <img id="previewImage" class="preview" alt="Uploaded plant image preview" />
+            <div id="loader" class="loader"></div>
+            <button id="analyzeBtn" onclick="predictDisease()" disabled>Analyze Plant</button>
+            <div id="result" class="result" aria-live="polite"></div>
+        </div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/particles.js@2.0.0/particles.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vanilla-tilt@1.7.0/dist/vanilla-tilt.min.js"></script>
+    <script>
+        particlesJS('particles-js', {
+            particles: {
+                number: { value: 80, density: { enable: true, value_area: 800 } },
+                color: { value: '#4caf50' },
+                shape: { type: 'circle' },
+                opacity: { value: 1.5, random: true },
+                size: { value: 3, random: true },
+                line_linked: { enable: true, distance: 150, color: '#4caf50', opacity: 0.2, width: 1 },
+                move: { enable: true, speed: 2, direction: 'none', random: false, straight: false, out_mode: 'out', bounce: false }
+            },
+            interactivity: {
+                detect_on: 'canvas',
+                events: { onhover: { enable: true, mode: 'repulse' }, onclick: { enable: true, mode: 'push' }, resize: true },
+                modes: { repulse: { distance: 100, duration: 0.4 }, push: { particles_nb: 4 } }
+            },
+            retina_detect: true
+        });
+
+        VanillaTilt.init(document.getElementById('tiltContainer'), {
+            max: 15,
+            speed: 400,
+            glare: true,
+            'max-glare': 0.2
+        });
+
+        const welcomeText = "Welcome to Plant Disease Detector";
+        const welcomeTextElement = document.getElementById('welcomeText');
+        let index = 0;
+
+        function typeText() {
+            if (index < welcomeText.length) {
+                welcomeTextElement.textContent += welcomeText.charAt(index);
+                index++;
+                setTimeout(typeText, 100);
+            }
+        }
+
+        window.onload = typeText;
+
+        function showMain() {
+            const welcomeContainer = document.getElementById('welcomeContainer');
+            const mainContainer = document.getElementById('mainContainer');
+            welcomeContainer.classList.add('hidden');
+            setTimeout(() => {
+                welcomeContainer.style.display = 'none';
+                mainContainer.classList.add('visible');
+            }, 500);
+        }
+
+        // Configurable API URL (fallback to localhost for development)
+        const API_URL = window._env_ && window._env_.API_URL || 'http://localhost:5000/predict';
+        const input = document.getElementById('imageInput');
+        const previewImage = document.getElementById('previewImage');
+        const resultDiv = document.getElementById('result');
+        const loader = document.getElementById('loader');
+        const analyzeBtn = document.getElementById('analyzeBtn');
+
+        input.addEventListener('change', () => {
+            if (input.files && input.files.length > 0) {
+                const file = input.files[0];
+                if (!['image/jpeg', 'image/png'].includes(file.type)) {
+                    resultDiv.textContent = 'Please upload a JPEG or PNG image.';
+                    resultDiv.classList.add('show');
+                    input.value = '';
+                    analyzeBtn.disabled = true;
+                    previewImage.style.display = 'none';
+                    return;
+                }
+                analyzeBtn.disabled = false;
+                resultDiv.textContent = '';
+                resultDiv.classList.remove('show');
+                const reader = new FileReader();
+                reader.onload = () => {
+                    previewImage.src = reader.result;
+                    previewImage.style.display = 'block';
+                };
+                reader.readAsDataURL(file);
+            } else {
+                analyzeBtn.disabled = true;
+                previewImage.style.display = 'none';
+                resultDiv.textContent = '';
+                resultDiv.classList.remove('show');
+            }
+        });
+
+        async function predictDisease() {
+            if (!input.files || input.files.length === 0) {
+                resultDiv.textContent = 'Please upload an image first.';
+                resultDiv.classList.add('show');
+                resultDiv.style.color = '#ff5252';
+                return;
+            }
+
+            resultDiv.textContent = '';
+            resultDiv.classList.remove('show');
+            loader.classList.add('show');
+            analyzeBtn.disabled = true;
+
+            try {
+                const formData = new FormData();
+                formData.append('image', input.files[0]);
+
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 10000);
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    body: formData,
+                    signal: controller.signal
+                });
+                clearTimeout(timeoutId);
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    const className = data.class.replace(/___/g, ' ').replace(/_/g, ' ');
+                    const confidence = (data.confidence * 100).toFixed(2);
+                    resultDiv.textContent = `🌿 ${className} (Confidence: ${confidence}%)`;
+                    resultDiv.style.color = className.toLowerCase().includes('healthy') ? '#4caf50' : '#ff5252';
+                } else {
+                    resultDiv.textContent = `Error: ${data.error || 'Prediction failed'}`;
+                    resultDiv.style.color = '#ff5252';
+                }
+            } catch (error) {
+                console.error('Prediction error:', error);
+                resultDiv.textContent = error.name === 'AbortError'
+                    ? 'Error: Request timed out. Please try again.'
+                    : 'Error: Unable to reach the server. Check your connection and try again.';
+                resultDiv.style.color = '#ff5252';
+            } finally {
+                loader.classList.remove('show');
+                analyzeBtn.disabled = false;
+                resultDiv.classList.add('show');
+            }
+        }
+    </script>
+</body>
+</html>
